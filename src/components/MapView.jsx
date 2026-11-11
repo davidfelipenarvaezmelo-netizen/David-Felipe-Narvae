@@ -52,7 +52,7 @@ function MapClickHandler({ onMapClick }) {
   return null;
 }
 
-export default function MapView({ reports, onSelectLocationToReport, onConfirmReport }) {
+export default function MapView({ reports, onSelectLocationToReport, onConfirmReport, isDesktop = false }) {
   // Coordenadas iniciales por defecto (Bogotá, Colombia - ajustable por GPS)
   const [center, setCenter] = useState([4.653456, -74.072092]);
   const [userLocation, setUserLocation] = useState(null);
@@ -84,7 +84,11 @@ export default function MapView({ reports, onSelectLocationToReport, onConfirmRe
       <div className="map-floating-bar">
         <div className="map-search-badge">
           <AlertCircle size={16} color="#60a5fa" />
-          <span>Toca el mapa para reportar una zona de peligro</span>
+          <span>
+            {isDesktop
+              ? 'Haz clic en el mapa para reportar una zona de peligro'
+              : 'Toca el mapa para reportar una zona de peligro'}
+          </span>
         </div>
         <button
           className="map-action-fab"

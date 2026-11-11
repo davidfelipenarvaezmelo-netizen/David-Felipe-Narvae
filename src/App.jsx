@@ -7,8 +7,27 @@ import AlertsFeed from './components/AlertsFeed';
 import ReportModal from './components/ReportModal';
 import PanicModal from './components/PanicModal';
 import AlertBanner from './components/AlertBanner';
+import DesktopSidebar from './components/DesktopSidebar';
+import DesktopHeader from './components/DesktopHeader';
+import DesktopSummary from './components/DesktopSummary';
+import useMediaQuery from './hooks/useMediaQuery';
 import { fetchReports, fetchAlerts, createReportApi, confirmReportApi } from './services/api';
 import { initSocket, emitPanicAlert } from './services/socket';
+
+const TAB_META = {
+  map: {
+    title: 'Mapa de riesgos',
+    subtitle: 'Explora, reporta y valida zonas de riesgo en tu ciudad en tiempo real',
+  },
+  list: {
+    title: 'Zonas de riesgo',
+    subtitle: 'Reportes activos validados por la comunidad',
+  },
+  alerts: {
+    title: 'Alertas en vivo',
+    subtitle: 'Canal de emergencias y señales SOS recibidas',
+  },
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('map'); // 'map' | 'list' | 'alerts'
@@ -20,6 +39,9 @@ export default function App() {
   const [selectedCoords, setSelectedCoords] = useState(null);
   const [activeBannerAlert, setActiveBannerAlert] = useState(null);
   const [unreadAlertsCount, setUnreadAlertsCount] = useState(1);
+
+  // Layout independiente: móvil (< 1024px) vs escritorio (>= 1024px)
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -145,6 +167,106 @@ export default function App() {
     });
   };
 
+  // Navegación compartida por ambos layouts
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'alerts') setUnreadAlertsCount(0);
+  };
+
+  const handleOpenReport = (coords = null) => {
+    setSelectedCoords(coords);
+    setIsReportModalOpen(true);
+  };
+
+  const modals = (
+    <>
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        onSubmit={handleCreateReport}
+        preselectedCoords={selectedCoords}
+      />
+
+      <PanicModal
+        isOpen={isPanicModalOpen}
+        onClose={() => setIsPanicModalOpen(false)}
+        onSendPanic={handleSendPanic}
+      />
+    </>
+  );
+
+  // ==================== LAYOUT ESCRITORIO ====================
+  if (isDesktop) {
+    const meta = TAB_META[activeTab];
+
+    return (
+      <div className="desktop-shell">
+        {/* Banner flotante de alertas en tiempo real */}
+        <AlertBanner
+          alert={activeBannerAlert}
+          onDismiss={() => setActiveBannerAlert(null)}
+        />
+
+        {/* Navegación lateral (exclusiva de escritorio) */}
+        <DesktopSidebar
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onOpenReport={() => handleOpenReport()}
+          onOpenPanic={() => setIsPanicModalOpen(true)}
+          unreadAlertsCount={unreadAlertsCount}
+        />
+
+        <div className="desktop-main">
+          <DesktopHeader
+            title={meta.title}
+            subtitle={meta.subtitle}
+            isConnected={isSocketConnected}
+            onOpenPanic={() => setIsPanicModalOpen(true)}
+          />
+
+          <div className="desktop-content">
+            {activeTab === 'map' ? (
+              <>
+                <section className="desktop-map-area">
+                  <MapView
+                    reports={reports}
+                    isDesktop
+                    onSelectLocationToReport={handleSelectLocation}
+                    onConfirmReport={handleConfirmReport}
+                  />
+                </section>
+
+                <aside className="desktop-panel">
+                  <DesktopSummary
+                    reports={reports}
+                    alerts={alerts}
+                    onConfirmReport={handleConfirmReport}
+                    onOpenReport={() => handleOpenReport()}
+                  />
+                </aside>
+              </>
+            ) : (
+              <div className="desktop-page">
+                {activeTab === 'list' && (
+                  <ReportsList
+                    reports={reports}
+                    onConfirmReport={handleConfirmReport}
+                    layout="grid"
+                  />
+                )}
+
+                {activeTab === 'alerts' && <AlertsFeed alerts={alerts} layout="grid" />}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {modals}
+      </div>
+    );
+  }
+
+  // ==================== LAYOUT MÓVIL ====================
   return (
     <div className="mobile-wrapper">
       {/* Banner flotante de alertas en tiempo real */}
@@ -176,39 +298,18 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'alerts' && (
-          <AlertsFeed alerts={alerts} />
-        )}
+        {activeTab === 'alerts' && <AlertsFeed alerts={alerts} />}
       </main>
 
-      {/* Barra de navegación inferior móvil */}
+      {/* Barra de navegación inferior (solo móvil) */}
       <BottomNav
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          if (tab === 'alerts') setUnreadAlertsCount(0);
-        }}
-        onOpenReport={() => {
-          setSelectedCoords(null);
-          setIsReportModalOpen(true);
-        }}
+        setActiveTab={handleTabChange}
+        onOpenReport={() => handleOpenReport()}
         unreadAlertsCount={unreadAlertsCount}
       />
 
-      {/* Modal de Reporte */}
-      <ReportModal
-        isOpen={isReportModalOpen}
-        onClose={() => setIsReportModalOpen(false)}
-        onSubmit={handleCreateReport}
-        preselectedCoords={selectedCoords}
-      />
-
-      {/* Modal de Emergencia SOS */}
-      <PanicModal
-        isOpen={isPanicModalOpen}
-        onClose={() => setIsPanicModalOpen(false)}
-        onSendPanic={handleSendPanic}
-      />
+      {modals}
     </div>
   );
 }
