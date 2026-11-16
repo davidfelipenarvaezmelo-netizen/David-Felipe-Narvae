@@ -10,6 +10,7 @@ import AlertBanner from './components/AlertBanner';
 import DesktopSidebar from './components/DesktopSidebar';
 import DesktopHeader from './components/DesktopHeader';
 import DesktopSummary from './components/DesktopSummary';
+import AuthModal from './components/AuthModal';
 import useMediaQuery from './hooks/useMediaQuery';
 import { fetchReports, fetchAlerts, createReportApi, confirmReportApi } from './services/api';
 import { initSocket, emitPanicAlert } from './services/socket';
@@ -192,6 +193,8 @@ export default function App() {
         onClose={() => setIsPanicModalOpen(false)}
         onSendPanic={handleSendPanic}
       />
+
+      <AuthModal />
     </>
   );
 

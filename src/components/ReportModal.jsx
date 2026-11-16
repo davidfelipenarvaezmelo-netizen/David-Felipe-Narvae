@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Send } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const CATEGORIES = [
   'Robo o Asalto',
@@ -14,6 +15,7 @@ const CATEGORIES = [
 const SEVERITIES = ['Baja', 'Media', 'Alta', 'Crítica'];
 
 export default function ReportModal({ isOpen, onClose, onSubmit, preselectedCoords }) {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -23,6 +25,13 @@ export default function ReportModal({ isOpen, onClose, onSubmit, preselectedCoor
   const [latitude, setLatitude] = useState(preselectedCoords?.lat || 4.653456);
   const [longitude, setLongitude] = useState(preselectedCoords?.lng || -74.072092);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Si hay sesión, prellenar el alias del reportante
+  useEffect(() => {
+    if (user?.username) {
+      setReportedBy((prev) => prev || user.username);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (preselectedCoords) {
@@ -163,7 +172,7 @@ export default function ReportModal({ isOpen, onClose, onSubmit, preselectedCoor
             <input
               type="text"
               className="form-input"
-              placeholder="Anónimo si se deja vacío"
+              placeholder={user ? `@${user.username}` : 'Anónimo si se deja vacío'}
               value={reportedBy}
               onChange={(e) => setReportedBy(e.target.value)}
             />

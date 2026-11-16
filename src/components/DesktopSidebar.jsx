@@ -1,5 +1,15 @@
 import React from 'react';
-import { Shield, MapPin, ListFilter, Bell, Plus, AlertTriangle } from 'lucide-react';
+import {
+  Shield,
+  MapPin,
+  ListFilter,
+  Bell,
+  Plus,
+  AlertTriangle,
+  LogIn,
+  LogOut,
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const TABS = [
   { id: 'map', label: 'Mapa', icon: MapPin },
@@ -14,6 +24,9 @@ export default function DesktopSidebar({
   onOpenPanic,
   unreadAlertsCount,
 }) {
+  const { user, isAuthenticated, openAuth, logout } = useAuth();
+  const initial = (user?.name || user?.username || '?').charAt(0).toUpperCase();
+
   return (
     <aside className="desktop-sidebar">
       <div className="desktop-brand">
@@ -54,6 +67,31 @@ export default function DesktopSidebar({
         <AlertTriangle size={18} />
         <span>Botón de pánico</span>
       </button>
+
+      {isAuthenticated ? (
+        <div className="desktop-account">
+          <span className="account-avatar account-avatar--sm">{initial}</span>
+          <div className="desktop-account-info">
+            <strong>{user?.name || user?.username}</strong>
+            <span>
+              @{user?.username} · {user?.role}
+            </span>
+          </div>
+          <button
+            className="desktop-account-logout"
+            onClick={logout}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+      ) : (
+        <button className="desktop-login-btn" onClick={() => openAuth('login')}>
+          <LogIn size={16} />
+          Iniciar sesión
+        </button>
+      )}
 
       <p className="desktop-sidebar-foot">Rutas Seguras · v1.0</p>
     </aside>

@@ -1,6 +1,6 @@
 const RAW_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Normaliza la URL para evitar dobles barras si la variable termina en "/"
-const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
+export const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
 
 // Datos de demostración iniciales (por si el backend o MongoDB aún no están corriendo)
 export const initialMockReports = [
